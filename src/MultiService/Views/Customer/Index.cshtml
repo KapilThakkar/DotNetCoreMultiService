@@ -1,0 +1,9 @@
+﻿@model Customer[]
+<h2>Customers</h2>
+
+<ul>
+    @foreach (var customer in Model)
+    {
+        <li>@customer.Name</li>
+    }
+</ul>
