@@ -7,5 +7,6 @@ namespace MultiService
 {
     public class Settings
     {
+        public string CustomerAPIService { get; set; }
     }
 }

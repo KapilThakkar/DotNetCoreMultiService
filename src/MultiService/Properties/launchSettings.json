@@ -12,6 +12,7 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
+        "CustomerAPIService": "http://localhost:10975/api/Customer",
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
