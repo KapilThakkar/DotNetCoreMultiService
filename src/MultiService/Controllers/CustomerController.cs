@@ -8,8 +8,6 @@ using MultiService.Models;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
 
-// For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace MultiService.Controllers
 {
 
@@ -19,6 +17,7 @@ namespace MultiService.Controllers
 
         // Pull settings from configuration
         private Settings _settings;
+        
         public CustomerController(IOptions<Settings> options)
         {
             _settings = options.Value;

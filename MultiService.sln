@@ -11,6 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MultiService", "src\MultiService\MultiService.xproj", "{E39A86EE-D060-4530-9ECA-1AC3869896BA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4079DD19-0848-409F-A52B-C622105F0ECC} = {4079DD19-0848-409F-A52B-C622105F0ECC}
+	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MultiService.API", "src\MultiService.API\MultiService.API.xproj", "{4079DD19-0848-409F-A52B-C622105F0ECC}"
 EndProject
@@ -23,9 +26,7 @@ Global
 		{E39A86EE-D060-4530-9ECA-1AC3869896BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E39A86EE-D060-4530-9ECA-1AC3869896BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E39A86EE-D060-4530-9ECA-1AC3869896BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E39A86EE-D060-4530-9ECA-1AC3869896BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4079DD19-0848-409F-A52B-C622105F0ECC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4079DD19-0848-409F-A52B-C622105F0ECC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4079DD19-0848-409F-A52B-C622105F0ECC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4079DD19-0848-409F-A52B-C622105F0ECC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

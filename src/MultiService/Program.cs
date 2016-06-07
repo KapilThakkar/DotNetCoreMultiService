@@ -12,6 +12,7 @@ namespace MultiService
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()
+                .UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? String.Empty)
                 .UseKestrel()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()

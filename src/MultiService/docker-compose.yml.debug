@@ -1,0 +1,23 @@
+version: '2'
+
+services:
+  # front end website
+  multiservice:
+    build:
+      context: ..
+      dockerfile: app/dockerfile.debug
+    environment:
+      - REMOTE_DEBUGGING=${REMOTE_DEBUGGING}
+      - CustomerAPIService=http://webapi/api/Customer
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      # make the website accessible publicaly
+      - "80:80"
+    volumes:
+      - .:/app
+    # Set the container startup order
+    depends_on:
+      - webapi
+  # the .NET Core WebAPI Service
+  webapi:
+    image: stevelasker/multiservice.api:latest
