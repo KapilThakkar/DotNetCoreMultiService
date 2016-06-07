@@ -144,9 +144,12 @@ $ProjectName = $ProjectName -replace "[^a-zA-Z0-9]", ""
 # Calculate the name of the image created by the compose file
 $ImageName = "${ProjectName}_multiservice.api"
 
+# the username used when tagging images
+$registryUsername = "stevelasker/"
 
 # .net core runtime ID for the container (used to publish the app correctly)
 $RuntimeID = "debian.8-x64"
+
 # .net core framework (used to publish the app correctly)
 $Framework = "netcoreapp1.0"
 
@@ -211,34 +214,18 @@ function Build () {
         Invoke-Expression "$escapedScriptPath -Version '$ClrDebugVersion' -RuntimeID '$RuntimeID' -InstallPath '$clrDbgPath'"
     }
 
-    $composeFilePath = GetComposeFilePath($pubPath)
+    $dockerfileName = GetDockerfilePath($pubPath)
 
-    $buildArgs = ""
-    if ($NoCache)
-    {
-        $buildArgs = "--no-cache"
+    if ($Environment -eq "Release") {
+      $tag = "latest"
+    } else{
+      $tag = "debug-latest"
     }
 
     # Call docker-compose on the published project to build the images
-    $shellCommand = "docker-compose -f '$composeFilePath' -p $ProjectName build $buildArgs"
+    $shellCommand = "docker build -f '$dockerfileName' -t ${registryUsername}${ProjectName}:$tag $pubPath"
     Write-Verbose "Executing: $shellCommand"
     Invoke-Expression "cmd /c $shellCommand `"2>&1`""
-    if ($LastExitCode -ne 0) {
-        Write-Error "Failed to build the image"
-    }
-
-    $tag = [System.DateTime]::Now.ToString("yyyy-MM-dd_HH-mm-ss")
-
-    $shellCommand = "docker tag $ImageName ${ImageName}:$tag"
-    Write-Verbose "Executing: $shellCommand"
-    Invoke-Expression "cmd /c $shellCommand `"2>&1`""
-    $shellCommand = "docker tag $ImageName stevelasker/multiservice.api:latest"
-    Write-Verbose "Executing: $shellCommand"
-    Invoke-Expression "cmd /c $shellCommand `"2>&1`""
-
-    if ($LastExitCode -ne 0) {
-        Write-Error "Failed to tag the image"
-    }
 }
 
 function GetContainerId () {
@@ -433,6 +420,21 @@ function GetComposeFilePath([string]$folder) {
     }
 }
 
+function GetDockerfilePath([string]$folder) {
+    $dockerfileName = $Null
+    if ($Environment -eq "Release") {
+        $dockerfileName = "dockerfile"
+    } else {
+        $dockerfileName = "dockerfile.$Environment"
+    }
+    $dockerfileName = Join-Path $folder $dockerfileName
+
+    if (Test-Path $dockerfileName) {
+        return $dockerfileName
+    } else {
+        Write-Error -Message "$Environment is not a valid parameter. File '$dockerfileName' does not exist." -Category InvalidArgument
+    }
+}
 # Need the full path of the project for mapping
 $ProjectFolder = Resolve-Path $ProjectFolder
 
@@ -469,7 +471,7 @@ $buildContext = Join-Path $dockerBinFolder $Environment
 # The folder to publish the app to
 $pubPath = Join-Path $buildContext "app"
 # The folder to install the debugger to
-$clrDbgPath = Join-Path $buildContext "clrdbg"
+$clrDbgPath = Join-Path $buildContext "app/clrdbg"
 
 Write-Verbose "Setting: `$env:CLRDBG_VERSION = `"$ClrDebugVersion`""
 $env:CLRDBG_VERSION = "$ClrDebugVersion"

@@ -141,11 +141,17 @@ $DockerWorkingDirectory = "/app/"
 # The project name can only contain alphanumeric charecters, replace everything else with empty string
 $ProjectName = $ProjectName -replace "[^a-zA-Z0-9]", ""
 
+# the username used when tagging images
+$RegistryUsername = "stevelasker/"
+
 # Calculate the name of the image created by the compose file
-$ImageName = "${ProjectName}_multiservice"
+$ImageName = "${ProjectName}"
+
+$FullyQualifiedImageName = "${RegistryUsername}${ProjectName}"
 
 # .net core runtime ID for the container (used to publish the app correctly)
 $RuntimeID = "debian.8-x64"
+
 # .net core framework (used to publish the app correctly)
 $Framework = "netcoreapp1.0"
 
@@ -153,7 +159,7 @@ $Framework = "netcoreapp1.0"
 function Clean () {
     $composeFilePath = GetComposeFilePath($ProjectFolder)
 
-    Write-Host "Cleaning image $ImageName"
+    Write-Host "Cleaning image $FullyQualifiedImageName"
 
     $shellCommand = "docker-compose -f '$composeFilePath' -p $ProjectName kill"
     Write-Verbose "Executing: $shellCommand"
@@ -168,14 +174,14 @@ function Clean () {
     if ($LastExitCode -ne 0) {
         Write-Error "Failed to remove the stopped containers"
     }
-
-    $ImageNameRegEx = "\b$ImageName\b"
+  
+    $ImageNameRegEx = "\b$FullyQualifiedImageName\b"
 
     # If $ImageName exists remove it
     docker images | select-string -pattern $ImageNameRegEx | foreach {
         $imageName = $_.Line.split(" ", [System.StringSplitOptions]::RemoveEmptyEntries)[0];
         $tag = $_.Line.split(" ", [System.StringSplitOptions]::RemoveEmptyEntries)[1];
-        $shellCommand = "docker rmi ${imageName}:$tag"
+        $shellCommand = "docker rmi ${imageName}:${tag}"
         Write-Verbose "Executing: $shellCommand";
         Invoke-Expression "cmd /c $shellCommand `"*>&1`"" | Out-Null
     }
@@ -210,41 +216,25 @@ function Build () {
         Invoke-Expression "$escapedScriptPath -Version '$ClrDebugVersion' -RuntimeID '$RuntimeID' -InstallPath '$clrDbgPath'"
     }
 
-    $composeFilePath = GetComposeFilePath($pubPath)
-
-    $buildArgs = ""
-    if ($NoCache)
-    {
-        $buildArgs = "--no-cache"
-    }
+    $dockerfileName = GetDockerfilePath($pubPath)
 
     # Call docker-compose on the published project to build the images
-    $shellCommand = "docker-compose -f '$composeFilePath' -p $ProjectName build $buildArgs"
+    $shellCommand = "docker build -f '$dockerfileName' -t ${FullyQualifiedImageName}:${tag} $pubPath"
     Write-Verbose "Executing: $shellCommand"
     Invoke-Expression "cmd /c $shellCommand `"2>&1`""
-    if ($LastExitCode -ne 0) {
-        Write-Error "Failed to build the image"
-    }
-
-    $tag = [System.DateTime]::Now.ToString("yyyy-MM-dd_HH-mm-ss")
-
-    $shellCommand = "docker tag $ImageName ${ImageName}:$tag"
-    Write-Verbose "Executing: $shellCommand"
-    Invoke-Expression "cmd /c $shellCommand `"2>&1`""
-    if ($LastExitCode -ne 0) {
-        Write-Error "Failed to tag the image"
-    }
 }
 
 function GetContainerId () {
-    $containerId = (docker ps -f "name=${ImageName}" -q -n=1)
+    $searchImage = "${ImageName}"
+    Write-Verbose "SearchImage: $searchImage"
+    $containerId = (docker ps -f "name=$searchImage" -q -n=1)
+    Write-Verbose "ContainerId Query: ${containerId}"
     if ([System.String]::IsNullOrWhiteSpace($containerId)) {
-        Write-Error "Could not find a container for Image $ImageName"
+        Write-Error "Could not find a container for Image $FullyQualifiedImageName"
     }
 
-    $containerId
+    return $containerId
 }
-
 # Validates volume mapping
 function ValidateVolumeMapping () {
     # Volume mapping enables shared folder mounting between host and docker container
@@ -315,7 +305,7 @@ function Exec () {
 # Gets the Url of the remote container
 function GetUrl () {
     if ([System.String]::IsNullOrWhiteSpace($Machine)) {
-        return "http://docker/customer"
+        return "http://docker/Customer"
     }
     else {
         "http://$(docker-machine ip $Machine)"
@@ -428,6 +418,21 @@ function GetComposeFilePath([string]$folder) {
     }
 }
 
+function GetDockerfilePath([string]$folder) {
+    $dockerfileName = $Null
+    if ($Environment -eq "Release") {
+        $dockerfileName = "dockerfile"
+    } else {
+        $dockerfileName = "dockerfile.$Environment"
+    }
+    $dockerfileName = Join-Path $folder $dockerfileName
+
+    if (Test-Path $dockerfileName) {
+        return $dockerfileName
+    } else {
+        Write-Error -Message "$Environment is not a valid parameter. File '$dockerfileName' does not exist." -Category InvalidArgument
+    }
+}
 # Need the full path of the project for mapping
 $ProjectFolder = Resolve-Path $ProjectFolder
 
@@ -464,7 +469,7 @@ $buildContext = Join-Path $dockerBinFolder $Environment
 # The folder to publish the app to
 $pubPath = Join-Path $buildContext "app"
 # The folder to install the debugger to
-$clrDbgPath = Join-Path $buildContext "clrdbg"
+$clrDbgPath = Join-Path $buildContext "app/clrdbg"
 
 Write-Verbose "Setting: `$env:CLRDBG_VERSION = `"$ClrDebugVersion`""
 $env:CLRDBG_VERSION = "$ClrDebugVersion"
@@ -478,6 +483,13 @@ else {
     $env:REMOTE_DEBUGGING = 0
 }
 
+if ($Environment -eq "Release") {
+    $tag = "latest"
+} else{
+    $tag = "debug-latest"
+}
+Write-Verbose "Tag: $tag"
+
 # Call the correct functions for the parameters that were used
 if ($Clean) {
     Clean
@@ -486,6 +498,7 @@ if ($Build) {
     Build
 }
 if ($Run) {
+    #Build
     Run
 }
 if ($Exec) {

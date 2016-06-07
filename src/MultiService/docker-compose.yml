@@ -2,8 +2,15 @@ version: '2'
 
 services:
   multiservice:
-    build:
-      context: ..
-      dockerfile: app/dockerfile
+    image: stevelasker/multiservice:latest
+    environment:
+      - CustomerAPIService=http://webapi/api/Customer
     ports:
+      # make the website accessible publicaly
       - "80:80"
+    # Set the container startup order
+    depends_on:
+      - webapi
+  # the .NET Core WebAPI Service
+  webapi:
+    image: stevelasker/multiserviceapi:latest

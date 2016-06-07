@@ -1,10 +1,8 @@
 version: '2'
 
 services:
-  multiservice.api:
-    build:
-      context: ..
-      dockerfile: app/dockerfile.debug
+  multiserviceapi:
+    image: stevelasker/multiserviceapi:debug-latest
     environment:
       - REMOTE_DEBUGGING=${REMOTE_DEBUGGING}
     ports:

@@ -3,9 +3,7 @@ version: '2'
 services:
   # front end website
   multiservice:
-    build:
-      context: ..
-      dockerfile: app/dockerfile.debug
+    image: stevelasker/multiservice:debug-latest
     environment:
       - REMOTE_DEBUGGING=${REMOTE_DEBUGGING}
       - CustomerAPIService=http://webapi/api/Customer
@@ -20,4 +18,4 @@ services:
       - webapi
   # the .NET Core WebAPI Service
   webapi:
-    image: stevelasker/multiservice.api:latest
+    image: stevelasker/multiserviceapi:latest

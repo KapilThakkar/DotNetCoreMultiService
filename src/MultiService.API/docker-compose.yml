@@ -1,9 +1,7 @@
 version: '2'
 
 services:
-  multiservice.api:
-    build:
-      context: ..
-      dockerfile: app/dockerfile
+  multiserviceapi:
+    image: stevelasker/multiserviceapi:latest
     ports:
       - "80:80"
