@@ -1,12 +1,14 @@
 version: '2'
 
 services:
+  # web front end service
   multiservice:
     image: stevelasker/multiservice:latest
+    # set environment variables
     environment:
       - CustomerAPIService=http://webapi/api/Customer
+    # make the website accessible publicaly
     ports:
-      # make the website accessible publicaly
       - "80:80"
     # Set the container startup order
     depends_on:
